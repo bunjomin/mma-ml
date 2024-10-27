@@ -1,0 +1,18 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mma
+    networks:
+      - default
+
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - default

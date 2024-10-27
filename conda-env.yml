@@ -57,4 +57,4 @@ dependencies:
       - tzdata==2024.1
       - urllib3==2.2.3
       - xgboost==2.1.1
-prefix: C:\Users\melvin\miniconda3\envs\mma_ml
+prefix: ./envs

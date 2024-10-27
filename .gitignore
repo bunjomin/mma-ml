@@ -1,0 +1,8 @@
+.env
+.venv
+tmp
+charts
+__pycache__
+model.json
+
+*.csv

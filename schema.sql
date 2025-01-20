@@ -28,7 +28,7 @@ DROP TYPE IF EXISTS "e_fighter_property" CASCADE;
 CREATE TYPE "e_fighter_property" AS ENUM (
   'height',
   'weight',
-  'reach'
+  'reach',
 );
 DROP TYPE IF EXISTS "e_stat_type" CASCADE;
 CREATE TYPE "e_stat_type" AS ENUM (

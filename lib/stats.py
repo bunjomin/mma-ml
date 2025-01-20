@@ -3,11 +3,12 @@ import numpy as np
 import xgboost as xgb
 from odds import Odds
 from datetime import datetime, timedelta
+import sql as sql
 
 oddsApi = Odds()
 
 
-class StatsLib:
+class Stats:
     def fighter_stats(self, fighter, before=np.datetime64("now")):
         returner = {}
         latest = (
@@ -225,87 +226,70 @@ class StatsLib:
 
 
 # EXAMPLE USAGE:
-# stats = StatsLib()
+stats = Stats()
 # events = oddsApi.list_fights(
 #     (datetime.now()).isoformat().split(".")[0] + "Z",
 #     (datetime.now() + timedelta(days=2)).isoformat().split(".")[0] + "Z",
 # )
-# fightDate = np.datetime64("2024-10-25")
-# print("UFC 308: Topuria vs. Holloway\n")
-# for fighter, opponent in [
-#     [
-#         "Ilia Topuria",
-#         "Max Holloway",
-#     ],
-#     [
-#         "Robert Whittaker",
-#         "Khamzat Chimaev",
-#     ],
-#     [
-#         "Magomed Ankalaev",
-#         "Aleksandar Rakić",
-#     ],
-#     [
-#         "Lerone Murphy",
-#         "Dan Ige",
-#     ],
-#     [
-#         "Shara Magomedov",
-#         "Armen Petrosyan",
-#     ],
-#     [
-#         "Ibo Aslan",
-#         "Raffael Cerqueira",
-#     ],
-#     [
-#         "Geoff Neal",
-#         "Rafael dos Anjos",
-#     ],
-#     [
-#         "Myktybek Orolbai",
-#         "Mateusz Rębecki",
-#     ],
-#     [
-#         "Abus Magomedov",
-#         "Brunno Ferreira",
-#     ],
-#     [
-#         "Kennedy Nzechukwu",
-#         "Chris Barnett",
-#     ],
-#     [
-#         "Farid Basharat",
-#         "Victor Hugo",
-#     ],
-#     [
-#         "Rinat Fakhretdinov",
-#         "Carlos Leal",
-#     ],
-# ]:
-#     a_pred = stats.predict_outcome(opponent, fighter, fightDate)
-#     prob = 1.0 / (1.0 + np.exp(-a_pred))
-#     print("Fight: %s vs. %s" % (fighter, opponent))
-#     print("Predicted probability: %.2f%%" % (prob * 100.0))
-#     a_pct = prob * 100.0
-#     b_pct = 100.0 - a_pct
-#     for e in events:
-#         if (e["home_team"] != fighter and e["away_team"] != fighter) and (
-#             e["home_team"] != opponent or e["away_team"] != opponent
-#         ):
-#             continue
-#         odds = oddsApi.get_odds(e["id"])[0]
-#         a = []
-#         b = []
-#         for bm in odds["bookmakers"]:
-#             for outcome in bm["markets"][0]["outcomes"]:
-#                 if outcome["name"] == fighter:
-#                     a.append(outcome["price"])
-#                 else:
-#                     b.append(outcome["price"])
-#         a_odds = np.mean(a)
-#         b_odds = np.mean(b)
+fightDate = np.datetime64("2024-10-25")
+out_df = pd.DataFrame()
+print("UFC 308: Topuria vs. Holloway\n")
+for fighter, opponent in [
+    ["Brandon Moreno", "Amir Albazi"],
+    ["Caio Machado", "Brendson Ribeiro"],
+    ["Marc-André Barriault", "Dustin Stoltzfus"],
+    ["Mike Malott", "Trevin Giles"],
+    ["Aiemann Zahabi", "Pedro Munhoz"],
+    ["Charles Jourdain", "Victor Henry"],
+    ["Jack Shore", "Youssef Zalal"],
+    ["Alexandr Romanov", "Rodrigo Nascimento"],
+    ["Serhiy Sidey", "Garrett Armfield"],
+    ["Chad Anheliger", "Cody Gibson"],
+]:
+    a_pred = stats.predict_outcome(fighter, opponent, fightDate)
+    b_pred = stats.predict_outcome(opponent, fighter, fightDate)
+    a_prob = (a_pred + (1.0 - b_pred)) / 2.0
+    print("Fight: %s vs. %s" % (fighter, opponent))
+    print("Predicted probability: %.2f%%" % (a_prob * 100.0))
+    a_pct = a_prob * 100.0
+    b_pct = 100.0 - a_pct
+    # for e in events:
+    #     if (e["home_team"] != fighter and e["away_team"] != fighter) and (
+    #         e["home_team"] != opponent or e["away_team"] != opponent
+    #     ):
+    #         continue
+    #     odds = oddsApi.get_odds(e["id"])[0]
+    #     a = []
+    #     b = []
+    #     for bm in odds["bookmakers"]:
+    #         for outcome in bm["markets"][0]["outcomes"]:
+    #             if outcome["name"] == fighter:
+    #                 a.append(outcome["price"])
+    #             else:
+    #                 b.append(outcome["price"])
+    #     a_odds = np.mean(a)
+    #     b_odds = np.mean(b)
 
-#     print(
-#         "%s (%.2f%%) %.2f vs. %s (%.2f%%) %.2f"
-#         % (fighter, a_pct, a_odds, opponent, b_pct, b_odds)
-#     )
+    # a_ev = a_prob * a_odds - (1 - a_prob)
+    # b_ev = b_prob * b_odds - (1 - b_prob)
+    out_df = pd.concat(
+        [
+            out_df,
+            pd.DataFrame(
+                {
+                    "fighter": fighter,
+                    "opponent": opponent,
+                    "a_pct": a_pct,
+                    "b_pct": b_pct,
+                    # "a_odds": a_odds,
+                    # "b_odds": b_odds,
+                    # "a_ev": a_ev,
+                    # "b_ev": b_ev,
+                },
+                index=[0],
+            ),
+        ],
+        ignore_index=True,
+    )
+
+out_df.to_csv("tmp/out.csv", index=False)

@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
+import lib.sql as sql
 
 from postgres import Postgres
-from fighters import Fighters
+from lib.fighters import Fighters
 
 
 class Fights:
@@ -16,6 +17,7 @@ class Fights:
         "distance_strikes",
         "clinch_strikes",
         "ground_strikes",
+        "knockdowns",
         "reversals",
         "submissions",
         "control_time",
@@ -23,21 +25,6 @@ class Fights:
     ]
 
     modifiers = ["landed", "attempted", "absorbed"]
-
-    _query = {
-        "all": """
-SELECT
-  id as row_id,
-  date,
-  method,
-  duration,
-  fighter_id,
-  opponent_id,
-  winner_id
-FROM
-  fights
-""",
-    }
 
     @staticmethod
     def time_to_seconds(t: str) -> int:
@@ -94,7 +81,23 @@ FROM
 
     def all(self) -> pd.DataFrame:
         returner = pd.DataFrame(
-            self._pg.query(Fights._query.get("all")),
+            self._pg.query(sql.get("fights.all")),
+            columns=[
+                "row_id",
+                "date",
+                "method",
+                "duration",
+                "fighter_id",
+                "opponent_id",
+                "winner_id",
+            ],
+            axis=1,
+        )
+        return returner
+
+    def get_by_fighter(self, fighter_id) -> pd.DataFrame:
+        returner = pd.DataFrame(
+            self._pg.query(sql.get("fights.by.fighter"), (fighter_id,)),
             columns=[
                 "row_id",
                 "date",
@@ -477,6 +480,7 @@ FROM
                     ("ground", "ground_strikes"),
                     ("submissions", "submissions"),
                     ("reversals", "reversals"),
+                    ("knockdowns", "knockdowns"),
                 ]:
                     for k in ["attempted", "landed"]:
                         if from_stat + "_" + k not in row:
